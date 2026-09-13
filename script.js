@@ -2,6 +2,13 @@
 const $ = (id) => document.getElementById(id);
 const TARGET = 50;
 const MILESTONES = [5, 15, 35];
+// Survival clock: the ring starts as 30 s, each right answer adds 2 s (capped at a
+// full ring), and the full ring shrinks linearly to 1 s over 180 s of play.
+const SURV_START = 30;
+const SURV_BONUS = 2;
+const SURV_MIN_CAP = 1;
+const SURV_SHRINK_OVER = 180;
+const RING_LEN = 2 * Math.PI * 52;
 const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const GOOD_WORDS = ["Yes!", "Nailed it!", "Correct!", "Boom!", "You got it!", "Nice one!", "Exactly!"];
@@ -24,7 +31,14 @@ let pendingNext = null;
 let timerHandle = null;
 
 function freshRun() {
-  return { score: 0, streak: 0, startTime: null, elapsed: 0, milestones: [], done: false };
+  return {
+    score: 0, streak: 0, startTime: null, elapsed: 0, milestones: [], done: false,
+    // survival clock (seconds)
+    started: false, played: 0, time: SURV_START,
+  };
+}
+function capacity(played) {
+  return Math.max(SURV_MIN_CAP, SURV_START - (SURV_START - SURV_MIN_CAP) * (played / SURV_SHRINK_OVER));
 }
 function load(key, fallback) {
   try {
@@ -106,7 +120,7 @@ function makeProblem() {
 
 // ---------- Rendering ----------
 const el = {
-  modeChip: $("modeChip"), streakBox: $("streakBox"), streakVal: $("streakVal"),
+  modeChip: $("modeChip"), ring: $("ring"), ringFill: $("ringFill"), ringVal: $("ringVal"),
   scoreBox: $("scoreBox"), scoreVal: $("scoreVal"), timerBox: $("timerBox"), timerVal: $("timerVal"),
   progress: $("progress"), progressFill: $("progressFill"),
   problem: $("problem"), answers: $("answers"), feedback: $("feedback"),
@@ -119,11 +133,12 @@ const el = {
 function renderHeader() {
   const m = settings.mode;
   el.modeChip.textContent = m === "practice" ? "Practice" : m === "survival" ? "Survival" : "Timed Challenge";
-  el.streakBox.hidden = m !== "survival";
+  el.ring.hidden = m !== "survival";
   el.scoreBox.hidden = m !== "timed";
   el.timerBox.hidden = m !== "timed";
   el.progress.hidden = m !== "timed";
-  el.streakVal.textContent = run.streak;
+  el.ringVal.textContent = run.streak;
+  renderRing();
   el.scoreVal.textContent = run.score;
   el.timerVal.textContent = fmtTime(run.elapsed);
   el.progressFill.style.width = `${Math.min(100, (run.score / TARGET) * 100)}%`;
@@ -161,6 +176,43 @@ function renderDrawer() {
   el.bestTime.textContent = fmtTime(bests.time);
 }
 
+function renderRing() {
+  const frac = Math.max(0, Math.min(1, run.time / capacity(run.played)));
+  el.ringFill.style.strokeDashoffset = RING_LEN * (1 - frac);
+  el.ring.classList.toggle("low", run.started && !run.done && frac < 0.25);
+}
+
+// ---------- Survival clock ----------
+let lastFrame = null;
+function clockFrame(now) {
+  if (settings.mode !== "survival" || !run.started || run.done) { lastFrame = null; return; }
+  requestAnimationFrame(clockFrame);
+  if (lastFrame == null) { lastFrame = now; return; }
+  const dt = Math.min(0.1, (now - lastFrame) / 1000); // clamp so a background tab doesn't dump time
+  lastFrame = now;
+  if (el.drawer.classList.contains("open")) return; // pause while settings are open
+  run.played += dt;
+  run.time = Math.min(run.time - dt, capacity(run.played));
+  if (run.time <= 0) { run.time = 0; renderRing(); timeUp(); return; }
+  renderRing();
+}
+function startClock() {
+  if (run.started) return;
+  run.started = true;
+  lastFrame = null;
+  requestAnimationFrame(clockFrame);
+}
+function timeUp() {
+  if (run.done) return;
+  run.done = true;
+  locked = true;
+  clearTimeout(pendingNext);
+  el.answers.querySelectorAll(".answer").forEach((b) => (b.disabled = true));
+  el.feedback.textContent = "Time's up!";
+  el.feedback.className = "feedback bad";
+  pendingNext = setTimeout(() => gameOver("time"), 700);
+}
+
 function nextProblem() {
   problem = makeProblem();
   renderProblem();
@@ -178,6 +230,7 @@ function onAnswer(btn, value) {
     run.startTime = performance.now();
     startTimer();
   }
+  if (mode === "survival") startClock();
 
   if (correct) {
     btn.classList.add("correct");
@@ -185,6 +238,7 @@ function onAnswer(btn, value) {
     el.feedback.className = "feedback good";
     if (mode === "survival") {
       run.streak += 1;
+      run.time = Math.min(run.time + SURV_BONUS, capacity(run.played));
       if (run.streak > bests.streak) { bests.streak = run.streak; save("twelve.bests", bests); }
     } else if (mode === "timed") {
       run.score += 1;
@@ -207,7 +261,9 @@ function onAnswer(btn, value) {
     el.feedback.textContent = `Not quite — ${problem.a} ${problem.op} ${problem.b} = ${problem.answer}`;
     el.feedback.className = "feedback bad";
     if (mode === "survival") {
-      pendingNext = setTimeout(gameOver, 1100);
+      run.done = true; // stop the clock; the miss already ended the round
+      renderRing();
+      pendingNext = setTimeout(() => gameOver("miss"), 1100);
     } else if (mode === "timed") {
       run.score = Math.max(0, run.score - 3);
       renderHeader();
@@ -218,13 +274,16 @@ function onAnswer(btn, value) {
   }
 }
 
-function gameOver() {
+function gameOver(reason) {
   run.done = true;
   const s = run.streak;
   const isBest = s > 0 && s >= bests.streak;
-  el.ovTitle.textContent = s === 0 ? "Oops, first one!" : isBest ? "New record streak!" : "Streak over";
+  const outOfTime = reason === "time";
+  el.ovTitle.textContent = isBest ? "New record streak!" : outOfTime ? "Time's up!" : s === 0 ? "Oops, first one!" : "Streak over";
   el.ovBig.textContent = s;
-  el.ovSub.textContent = s === 1 ? "1 in a row. Shake it off and go again." : `${s} in a row. Best ever: ${bests.streak}.`;
+  el.ovSub.textContent = s === 1
+    ? "1 in a row. Shake it off and go again."
+    : `${s} in a row${outOfTime ? " before the clock ran out" : ""}. Best ever: ${bests.streak}.`;
   el.ovBtn.textContent = "Try again";
   el.overlay.hidden = false;
   el.ovBtn.focus();
@@ -250,6 +309,7 @@ function finishTimed() {
 function resetRun() {
   clearTimeout(pendingNext);
   stopTimer();
+  lastFrame = null;
   run = freshRun();
   el.overlay.hidden = true;
   renderHeader();

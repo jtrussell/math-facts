@@ -175,6 +175,61 @@ button:focus-visible, [tabindex]:focus-visible {
 .progress-tick.hit { background: var(--accent-deep); }
 .progress-tick.hit::after { color: var(--accent-deep); }
 
+/* ---------- Survival countdown ring ---------- */
+.ring {
+  position: relative;
+  width: clamp(104px, 18vh, 148px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.ring[hidden] { display: none; }
+.ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+.ring circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+.ring-track { stroke: var(--line); }
+.ring-fill {
+  stroke: var(--accent);
+  stroke-dasharray: 326.73;
+  stroke-dashoffset: 0;
+  transition: stroke 250ms ease;
+}
+.ring.low .ring-fill { stroke: var(--bad); }
+.ring.low .ring-inner { animation: pulse 600ms ease-in-out infinite alternate; }
+@keyframes pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+.ring-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.ring-value {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(2rem, 6vh, 3rem);
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.ring.low .ring-value { color: var(--bad); }
+.ring-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 /* ---------- Stage ---------- */
 .stage {
   flex: 1;

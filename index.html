@@ -11,10 +11,6 @@
   <header class="topbar">
     <div class="mode-chip" id="modeChip">Survival</div>
     <div class="stats">
-      <div class="stat accent" id="streakBox">
-        <span class="stat-label">In a row</span>
-        <span class="stat-value" id="streakVal">0</span>
-      </div>
       <div class="stat accent" id="scoreBox" hidden>
         <span class="stat-label">Points</span>
         <span class="stat-value" id="scoreVal">0</span>
@@ -34,6 +30,16 @@
   </div>
 
   <main class="stage">
+    <div class="ring" id="ring" role="img" aria-label="Time remaining">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+        <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div class="ring-inner">
+        <div class="ring-value" id="ringVal">0</div>
+        <div class="ring-label">in a row</div>
+      </div>
+    </div>
     <div class="problem" id="problem" aria-live="polite"></div>
     <div class="answers" id="answers"></div>
     <div class="feedback" id="feedback" aria-live="polite"></div>
@@ -59,7 +65,7 @@
       </button>
       <button class="mode-opt" data-mode="survival" id="mode-survival">
         <span class="dot"></span>
-        <div><strong>Survival</strong><span class="desc">How many in a row before a miss?</span></div>
+        <div><strong>Survival</strong><span class="desc">How many in a row before a miss? The ring is your clock: each right answer adds time, and the clock speeds up the longer you last.</span></div>
       </button>
       <button class="mode-opt" data-mode="timed" id="mode-timed">
         <span class="dot"></span>
