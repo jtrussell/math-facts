@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Twelve by Twelve</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="mode-chip" id="modeChip">Survival</div>
+    <div class="stats">
+      <div class="stat accent" id="streakBox">
+        <span class="stat-label">In a row</span>
+        <span class="stat-value" id="streakVal">0</span>
+      </div>
+      <div class="stat accent" id="scoreBox" hidden>
+        <span class="stat-label">Points</span>
+        <span class="stat-value" id="scoreVal">0</span>
+      </div>
+      <div class="stat" id="timerBox" hidden>
+        <span class="stat-label">Time</span>
+        <span class="stat-value" id="timerVal">0:00.0</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress" id="progress" hidden>
+    <div class="progress-fill" id="progressFill"></div>
+    <div class="progress-tick" data-label="5" data-m="5" style="left:10%"></div>
+    <div class="progress-tick" data-label="15" data-m="15" style="left:30%"></div>
+    <div class="progress-tick" data-label="35" data-m="35" style="left:70%"></div>
+  </div>
+
+  <main class="stage">
+    <div class="problem" id="problem" aria-live="polite"></div>
+    <div class="answers" id="answers"></div>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+  </main>
+
+  <footer class="hint" id="hint">Swipe left for settings</footer>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="drawer" id="drawer" aria-label="Settings">
+  <div class="drawer-head">
+    <h2>Settings</h2>
+    <button class="close" id="closeDrawer" aria-label="Close settings">✕</button>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Mode</div>
+    <div class="mode-list" id="modeList">
+      <button class="mode-opt" data-mode="practice" id="mode-practice">
+        <span class="dot"></span>
+        <div><strong>Practice</strong><span class="desc">No score. Answer, see feedback, keep going.</span></div>
+      </button>
+      <button class="mode-opt" data-mode="survival" id="mode-survival">
+        <span class="dot"></span>
+        <div><strong>Survival</strong><span class="desc">How many in a row before a miss?</span></div>
+      </button>
+      <button class="mode-opt" data-mode="timed" id="mode-timed">
+        <span class="dot"></span>
+        <div><strong>Timed Challenge</strong><span class="desc">Race to 50 points. +1 right, −3 wrong. Timer starts on your first answer.</span></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Operations</div>
+    <div class="ops">
+      <button class="op-toggle" data-op="mult" id="op-mult">
+        <span><span class="sym">×</span> Multiply</span><span class="switch"></span>
+      </button>
+      <button class="op-toggle" data-op="div" id="op-div">
+        <span><span class="sym">÷</span> Divide</span><span class="switch"></span>
+      </button>
+    </div>
+    <p class="section-note" id="opsNote">Keep at least one on.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Facts to practice <button class="mini" id="allFacts">Select all</button></div>
+    <div class="facts" id="facts"></div>
+    <p class="section-note" id="factsNote">Multiplication uses one of these as a factor. Division uses one of these as the answer.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Personal bests <button class="mini" id="resetBests">Reset</button></div>
+    <div class="bests">
+      <div class="best"><span class="stat-label">Longest streak</span><div class="stat-value" id="bestStreak">0</div></div>
+      <div class="best"><span class="stat-label">Fastest to 50</span><div class="stat-value" id="bestTime">—</div></div>
+    </div>
+  </div>
+</aside>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="card">
+    <h3 id="ovTitle"></h3>
+    <div class="big" id="ovBig"></div>
+    <p id="ovSub"></p>
+    <button class="primary" id="ovBtn">Play again</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<canvas id="confetti"></canvas>
+<script src="script.js"></script>
+</body>
+</html>
