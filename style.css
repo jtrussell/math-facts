@@ -97,6 +97,8 @@ button:focus-visible, [tabindex]:focus-visible {
   min-height: 56px;
 }
 .mode-chip {
+  flex: none;
+  white-space: nowrap;
   font-weight: 800;
   font-size: 0.8rem;
   letter-spacing: 0.08em;
@@ -131,7 +133,12 @@ button:focus-visible, [tabindex]:focus-visible {
   font-size: 1.6rem;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
 }
+/* Reserve room for the widest value so changing digits never reflow the header. */
+#timerVal { min-width: 5.6ch; }
+#scoreVal { min-width: 2ch; }
 .stat.accent .stat-value { color: var(--accent); }
 .stat[hidden] { display: none; }
 
@@ -327,7 +334,9 @@ button:focus-visible, [tabindex]:focus-visible {
   .app { padding-inline: 16px; }
   .answers { grid-template-columns: 1fr; gap: 12px; }
   .answer { min-height: 72px; font-size: 2.2rem; }
-  .stat { min-width: 76px; padding: 4px 10px; }
+  .mode-chip { font-size: 0.7rem; padding: 6px 10px; letter-spacing: 0.06em; }
+  .stats { gap: 8px; }
+  .stat { min-width: 0; padding: 4px 10px; }
   .stat-value { font-size: 1.3rem; }
 }
 
